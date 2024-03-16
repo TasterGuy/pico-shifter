@@ -72,19 +72,42 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
                                            .hat = 0,
                                            .buttons = 0};
 
-            if (btn) {
-                report.hat = GAMEPAD_HAT_UP;
-                report.buttons = GAMEPAD_BUTTON_A;
-                tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
+            // if (btn) {
+            //     report.hat = GAMEPAD_HAT_UP;
+            //     report.buttons = GAMEPAD_BUTTON_A;
+            //     tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
 
-                has_gamepad_key = true;
-            } else {
-                report.hat = GAMEPAD_HAT_CENTERED;
-                report.buttons = 0;
-                if (has_gamepad_key)
-                    tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
-                has_gamepad_key = false;
+            //     has_gamepad_key = true;
+            // } else {
+            //     report.hat = GAMEPAD_HAT_CENTERED;
+            //     report.buttons = 0;
+            //     if (has_gamepad_key)
+            //         tud_hid_report(REPORT_ID_GAMEPAD, &report,
+            //         sizeof(report));
+            //     has_gamepad_key = false;
+            // }
+
+
+            adc_select_input(0);
+            uint adc_x_raw = adc_read();
+            adc_select_input(1);
+            uint adc_y_raw = adc_read();
+
+            if (adc_x_raw < 1024) {
+                if (adc_y_raw < 1024) {
+                    report.buttons = GAMEPAD_BUTTON_0;
+                } else if (adc_y_raw > 1024) {
+                    report.buttons = GAMEPAD_BUTTON_1;
+                }
+            } else if (adc_x_raw > 1024) {
+                if (adc_y_raw < 1024) {
+                    report.buttons = GAMEPAD_BUTTON_2;
+                } else if (adc_y_raw > 1024) {
+                    report.buttons = GAMEPAD_BUTTON_3;
+                }
             }
+            tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
+
         } break;
 
         default:
@@ -111,7 +134,7 @@ void hid_task(void) {
     } else {
         // Send the 1st of report chain, the rest will be sent by
         // tud_hid_report_complete_cb()
-        send_hid_report(REPORT_ID_KEYBOARD, btn);
+        send_hid_report(REPORT_ID_GAMEPAD, btn);
     }
 }
 

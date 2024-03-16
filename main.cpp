@@ -2,30 +2,148 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 
+#include <stdlib.h>
+#include <string.h>
+
+#include "bsp/board.h"
+#include "tusb.h"
+
+#include "usb_descriptors.h"
+
+uint16_t tud_hid_get_report_cb(uint8_t instance,
+                               uint8_t report_id,
+                               hid_report_type_t report_type,
+                               uint8_t* buffer,
+                               uint16_t reqlen) {
+    // TODO not Implemented
+    (void)instance;
+    (void)report_id;
+    (void)report_type;
+    (void)buffer;
+    (void)reqlen;
+
+    return 0;
+}
+
+void tud_hid_set_report_cb(uint8_t instance,
+                           uint8_t report_id,
+                           hid_report_type_t report_type,
+                           uint8_t const* buffer,
+                           uint16_t bufsize) {
+    (void)instance;
+
+    if (report_type == HID_REPORT_TYPE_OUTPUT) {
+        // Set keyboard LED e.g Capslock, Numlock etc...
+        if (report_id == REPORT_ID_KEYBOARD) {
+            // bufsize should be (at least) 1
+            if (bufsize < 1)
+                return;
+
+            uint8_t const kbd_leds = buffer[0];
+
+            // if (kbd_leds & KEYBOARD_LED_CAPSLOCK) {
+            //     // Capslock On: disable blink, turn led on
+            //     blink_interval_ms = 0;
+            //     board_led_write(true);
+            // } else {
+            //     // Caplocks Off: back to normal blink
+            //     board_led_write(false);
+            //     blink_interval_ms = BLINK_MOUNTED;
+            // }
+        }
+    }
+}
+
+
+static void send_hid_report(uint8_t report_id, uint32_t btn) {
+    if (!tud_hid_ready())
+        return;
+
+    switch (report_id) {
+        case REPORT_ID_GAMEPAD: {
+            static bool has_gamepad_key = false;
+
+            hid_gamepad_report_t report = {.x = 0,
+                                           .y = 0,
+                                           .z = 0,
+                                           .rz = 0,
+                                           .rx = 0,
+                                           .ry = 0,
+                                           .hat = 0,
+                                           .buttons = 0};
+
+            if (btn) {
+                report.hat = GAMEPAD_HAT_UP;
+                report.buttons = GAMEPAD_BUTTON_A;
+                tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
+
+                has_gamepad_key = true;
+            } else {
+                report.hat = GAMEPAD_HAT_CENTERED;
+                report.buttons = 0;
+                if (has_gamepad_key)
+                    tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
+                has_gamepad_key = false;
+            }
+        } break;
+
+        default:
+            break;
+    }
+}
+
+void hid_task(void) {
+    // Poll every 10ms
+    const uint32_t interval_ms = 10;
+    static uint32_t start_ms = 0;
+
+    if (board_millis() - start_ms < interval_ms)
+        return; // not enough time
+    start_ms += interval_ms;
+
+    uint32_t const btn = board_button_read();
+
+    // Remote wakeup
+    if (tud_suspended() && btn) {
+        // Wake up host if we are in suspend mode
+        // and REMOTE_WAKEUP feature is enabled by host
+        tud_remote_wakeup();
+    } else {
+        // Send the 1st of report chain, the rest will be sent by
+        // tud_hid_report_complete_cb()
+        send_hid_report(REPORT_ID_KEYBOARD, btn);
+    }
+}
+
 int main() {
     stdio_init_all();
     adc_init();
     adc_gpio_init(26);
     adc_gpio_init(27);
+    board_init();
+    tusb_init();
+
 
     while (1) {
-        adc_select_input(0);
-        uint adc_x_raw = adc_read();
-        adc_select_input(1);
-        uint adc_y_raw = adc_read();
+        tud_task();
+        hid_task();
+        // adc_select_input(0);
+        // uint adc_x_raw = adc_read();
+        // adc_select_input(1);
+        // uint adc_y_raw = adc_read();
 
 
-        const uint bar_width = 40;
-        const uint adc_max = (1 << 12) - 1;
-        uint bar_x_pos = adc_x_raw * bar_width / adc_max;
-        uint bar_y_pos = adc_y_raw * bar_width / adc_max;
-        printf("\rX: [");
-        for (int i = 0; i < bar_width; ++i)
-            putchar(i == bar_x_pos ? 'o' : ' ');
-        printf("]  Y: [");
-        for (int i = 0; i < bar_width; ++i)
-            putchar(i == bar_y_pos ? 'o' : ' ');
-        printf("]");
-        sleep_ms(50);
+        // const uint bar_width = 40;
+        // const uint adc_max = (1 << 12) - 1;
+        // uint bar_x_pos = adc_x_raw * bar_width / adc_max;
+        // uint bar_y_pos = adc_y_raw * bar_width / adc_max;
+        // printf("\rX: [");
+        // for (int i = 0; i < bar_width; ++i)
+        //     putchar(i == bar_x_pos ? 'o' : ' ');
+        // printf("]  Y: [");
+        // for (int i = 0; i < bar_width; ++i)
+        //     putchar(i == bar_y_pos ? 'o' : ' ');
+        // printf("]");
+        // sleep_ms(50);
     }
 }

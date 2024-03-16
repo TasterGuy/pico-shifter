@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 include(pico_sdk_import.cmake)
+include(pico_extras_import_optional.cmake)
 
 project(shifter C CXX ASM)
 set(CMAKE_C_STANDARD 11)
@@ -12,7 +13,7 @@ pico_sdk_init()
 add_executable(shifter main.cpp)
 
 # Add pico_stdlib library, add more if used
-target_link_libraries(shifter pico_stdlib)
+target_link_libraries(shifter pico_stdlib hardware_adc)
 
 # enable usb output, disable uart output
 pico_enable_stdio_usb(shifter 1)

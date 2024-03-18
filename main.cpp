@@ -38,18 +38,6 @@ void tud_hid_set_report_cb(uint8_t instance,
             // bufsize should be (at least) 1
             if (bufsize < 1)
                 return;
-
-            // uint8_t const kbd_leds = buffer[0];
-
-            // if (kbd_leds & KEYBOARD_LED_CAPSLOCK) {
-            //     // Capslock On: disable blink, turn led on
-            //     blink_interval_ms = 0;
-            //     board_led_write(true);
-            // } else {
-            //     // Caplocks Off: back to normal blink
-            //     board_led_write(false);
-            //     blink_interval_ms = BLINK_MOUNTED;
-            // }
         }
     }
 }
@@ -61,8 +49,6 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
 
     switch (report_id) {
         case REPORT_ID_GAMEPAD: {
-            // static bool has_gamepad_key = false;
-
             hid_gamepad_report_t report = {.x = 0,
                                            .y = 0,
                                            .z = 0,
@@ -71,23 +57,6 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
                                            .ry = 0,
                                            .hat = 0,
                                            .buttons = 0};
-
-            // if (btn) {
-            //     report.hat = GAMEPAD_HAT_UP;
-            //     report.buttons = GAMEPAD_BUTTON_A;
-            //     tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
-
-            //     has_gamepad_key = true;
-            // } else {
-            //     report.hat = GAMEPAD_HAT_CENTERED;
-            //     report.buttons = 0;
-            //     if (has_gamepad_key)
-            //         tud_hid_report(REPORT_ID_GAMEPAD, &report,
-            //         sizeof(report));
-            //     has_gamepad_key = false;
-            // }
-
-
             adc_select_input(0);
             uint adc_x_raw = adc_read();
             adc_select_input(1);
@@ -97,13 +66,20 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
                 if (adc_y_raw < 1024) {
                     report.buttons = GAMEPAD_BUTTON_0;
                 } else if (adc_y_raw > 4096 - 1024) {
-                    report.buttons = GAMEPAD_BUTTON_1;
+                    report.buttons = GAMEPAD_BUTTON_2;
+                } else {
+                    report.buttons = GAMEPAD_BUTTON_4;
                 }
             } else if (adc_x_raw > 4096 - 1024) {
                 if (adc_y_raw < 1024) {
-                    report.buttons = GAMEPAD_BUTTON_2;
+                    report.buttons = GAMEPAD_BUTTON_1;
                 } else if (adc_y_raw > 4096 - 1024) {
                     report.buttons = GAMEPAD_BUTTON_3;
+                } else {
+                    if (true) { // if for reverse gear
+                    } else {
+                        report.buttons = GAMEPAD_BUTTON_5;
+                    }
                 }
             }
             tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
@@ -150,23 +126,5 @@ int main() {
     while (1) {
         tud_task();
         hid_task();
-        // adc_select_input(0);
-        // uint adc_x_raw = adc_read();
-        // adc_select_input(1);
-        // uint adc_y_raw = adc_read();
-
-
-        // const uint bar_width = 40;
-        // const uint adc_max = (1 << 12) - 1;
-        // uint bar_x_pos = adc_x_raw * bar_width / adc_max;
-        // uint bar_y_pos = adc_y_raw * bar_width / adc_max;
-        // printf("\rX: [");
-        // for (int i = 0; i < bar_width; ++i)
-        //     putchar(i == bar_x_pos ? 'o' : ' ');
-        // printf("]  Y: [");
-        // for (int i = 0; i < bar_width; ++i)
-        //     putchar(i == bar_y_pos ? 'o' : ' ');
-        // printf("]");
-        // sleep_ms(50);
     }
 }

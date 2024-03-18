@@ -1,6 +1,9 @@
 #include "hardware/adc.h"
+#include "hardware/gpio.h"
+
 #include "pico/stdlib.h"
 #include <stdio.h>
+
 
 #include <stdlib.h>
 #include <string.h>
@@ -58,30 +61,32 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
                                            .hat = 0,
                                            .buttons = 0};
             adc_select_input(0);
-            uint adc_x_raw = adc_read();
-            adc_select_input(1);
             uint adc_y_raw = adc_read();
+            adc_select_input(1);
+            uint adc_x_raw = adc_read();
 
-            if (adc_x_raw < 1024) {
-                if (adc_y_raw < 1024) {
-                    report.buttons = GAMEPAD_BUTTON_0;
-                } else if (adc_y_raw > 4096 - 1024) {
-                    report.buttons = GAMEPAD_BUTTON_2;
-                } else {
-                    report.buttons = GAMEPAD_BUTTON_4;
-                }
-            } else if (adc_x_raw > 4096 - 1024) {
-                if (adc_y_raw < 1024) {
+            if (adc_y_raw < 1024) {
+                if (adc_x_raw < 1024) {
                     report.buttons = GAMEPAD_BUTTON_1;
-                } else if (adc_y_raw > 4096 - 1024) {
+                } else if (adc_x_raw > 1024 && adc_x_raw < 3072) {
                     report.buttons = GAMEPAD_BUTTON_3;
                 } else {
-                    if (true) { // if for reverse gear
+                    if (gpio_get(7)) { // if for reverse gear
+                        report.buttons = GAMEPAD_BUTTON_6;
                     } else {
                         report.buttons = GAMEPAD_BUTTON_5;
                     }
                 }
+            } else if (adc_y_raw > 3072) {
+                if (adc_x_raw < 1024) {
+                    report.buttons = GAMEPAD_BUTTON_0;
+                } else if (adc_x_raw > 1024 && adc_x_raw < 3072) {
+                    report.buttons = GAMEPAD_BUTTON_2;
+                } else {
+                    report.buttons = GAMEPAD_BUTTON_4;
+                }
             }
+
             tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
 
         } break;
@@ -119,6 +124,9 @@ int main() {
     adc_init();
     adc_gpio_init(26);
     adc_gpio_init(27);
+    gpio_init(7);
+    gpio_set_dir(7, GPIO_IN);
+    // gpio_pull_down(7);
     board_init();
     tusb_init();
 

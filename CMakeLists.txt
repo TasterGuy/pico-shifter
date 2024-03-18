@@ -1,16 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
 include(pico_sdk_import.cmake)
-include(pico_extras_import_optional.cmake)
-
-# if(TARGET tinyusb_device)
-
-set(FAMILY rp2040)
-set(BOARD pico_sdk)
-set(TINYUSB_FAMILY_PROJECT_NAME_PREFIX "tinyusb_dev_")
-# add_subdirectory(${PICO_TINYUSB_PATH}/examples/device tinyusb_device_examples)
-# add_subdirectory(C:/Program\ Files/Raspberry\ Pi/Pico\ SDK\ v1.5.1/pico-sdk/lib/tinyusb/examples/device tinyusb_device_examples)
-
 
 project(shifter C CXX ASM)
 set(CMAKE_C_STANDARD 11)
@@ -19,20 +9,12 @@ set(CMAKE_CXX_STANDARD 17)
 # Creates a pico-sdk subdirectory in project for the libraries
 pico_sdk_init()
 
-add_compile_options(-Wall
-        -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
-        -Wno-unused-function # we have some for the docs that aren't called
-        )
-if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-Wno-maybe-uninitialized)
-endif()
-
 add_executable(shifter)
 
 target_sources(shifter PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
         ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
-        )
+)
 
 target_include_directories(shifter PUBLIC
         ${CMAKE_CURRENT_LIST_DIR})
@@ -46,6 +28,3 @@ pico_enable_stdio_uart(shifter 0)
 
 # Need to generate UF2 file for upload to RP2040
 pico_add_extra_outputs(shifter)
-# else()
-# message("zdupydomordyzaur")
-# endif()

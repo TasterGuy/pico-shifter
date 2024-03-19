@@ -2,7 +2,7 @@
 
 ! WORK IN PROGRESS !
 
-This Project documents the process of programing, wiring and deplaying a USB Adapter using a Raspberry Pi Pico written in C
+This Project documents the process of programming, wiring and deploying a USB Adapter using a Raspberry Pi Pico written in C
 
 There's a lot of Arduino based adapters on the internet for the Logitech G Shifter, however I had a Raspberry Pi Pico laying around so I decided to mash some code and cables together to come up with a much cheaper solution.
 

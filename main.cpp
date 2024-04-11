@@ -66,9 +66,9 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
             uint adc_x_raw = adc_read();
 
             if (adc_y_raw < 1024) {
-                if (adc_x_raw < 1024) {
+                if (adc_x_raw < 1536) {
                     report.buttons = GAMEPAD_BUTTON_1;
-                } else if (adc_x_raw > 1024 && adc_x_raw < 3072) {
+                } else if (adc_x_raw > 1536 && adc_x_raw < 2560) {
                     report.buttons = GAMEPAD_BUTTON_3;
                 } else {
                     if (gpio_get(7)) { // if for reverse gear
@@ -77,10 +77,10 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
                         report.buttons = GAMEPAD_BUTTON_5;
                     }
                 }
-            } else if (adc_y_raw > 3072) {
-                if (adc_x_raw < 1024) {
+            } else if (adc_y_raw > 2560) {
+                if (adc_x_raw < 1536) {
                     report.buttons = GAMEPAD_BUTTON_0;
-                } else if (adc_x_raw > 1024 && adc_x_raw < 3072) {
+                } else if (adc_x_raw > 1536 && adc_x_raw < 2560) {
                     report.buttons = GAMEPAD_BUTTON_2;
                 } else {
                     report.buttons = GAMEPAD_BUTTON_4;
